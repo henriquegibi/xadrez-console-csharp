@@ -41,6 +41,18 @@ namespace xandrez_console
                         partida.validarPosicaoDeDestino(origem, destino);
 
                         partida.realizaJogada(origem, destino);
+
+                        if (partida.promocao)
+                        {
+                            Console.WriteLine("Peão promovido! Escolha um número:");
+                            Console.WriteLine("1 - Dama");
+                            Console.WriteLine("2 - Bispo");
+                            Console.WriteLine("3 - Torre");
+                            Console.WriteLine("4 - Cavalo");
+
+                            string s = Console.ReadLine();
+                            partida.escolhaPromocao(s);
+                        }
                     }
                     catch (TabuleiroException e)
                     {

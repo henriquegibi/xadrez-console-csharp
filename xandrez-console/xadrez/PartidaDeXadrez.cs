@@ -15,6 +15,10 @@ namespace xadrez
         public bool xeque { get; private set; }
         public Peca vulneravelEnPassant { get; private set; }
 
+        public bool promocao { get; private set; }
+        public Peca pecaPromocao { get; private set; }
+        public Posicao posicaoPecaPromocao { get; private set; }
+
         public PartidaDeXadrez()
         {
             tab = new Tabuleiro(8, 8);
@@ -23,6 +27,9 @@ namespace xadrez
             terminada = false;
             xeque = false;
             vulneravelEnPassant = null;
+            promocao = false;
+            pecaPromocao = null;
+            posicaoPecaPromocao = new Posicao(0, 0);
             pecas = new HashSet<Peca>();
             capturadas = new HashSet<Peca>();
             colocarPecas();
@@ -136,19 +143,20 @@ namespace xadrez
                 throw new TabuleiroException("Você não pode se colocar em Xeque!!");
             }
 
-            Peca p = tab.peca(destino);
-
             //promocao #jogadaespecial
-            if (p is Peao)
+            pecaPromocao = tab.peca(destino);
+            posicaoPecaPromocao = destino;
+
+            if (pecaPromocao is Peao)
             {
-                if ((p.cor == Cor.Branca && destino.linha == 0) || (p.cor == Cor.Preta && destino.linha == 7))
+                if (pecaPromocao.cor == Cor.Branca && destino.linha == 0 || pecaPromocao.cor == Cor.Preta && destino.linha == 7)
                 {
-                    p = tab.retirarPeca(destino);
-                    pecas.Remove(p);
-                    Peca dama = new Dama(tab, p.cor);
-                    tab.colocarPeca(dama, destino);
-                    pecas.Add(dama);
+                    promocao = true;
                 }
+            }
+            else
+            {
+                promocao = false;
             }
 
             if (estaEmXeque(adversaria(jogadorAtual)))
@@ -166,13 +174,55 @@ namespace xadrez
                 turno++;
                 mudaJogador();
             }
-            
+
+            Peca p = tab.peca(destino);
+
             //testando en passant #jogadaespecial
             if (p is Peao && (destino.linha == origem.linha - 2 || destino.linha == origem.linha + 2))
             {
                 vulneravelEnPassant = p;
             }
             else vulneravelEnPassant = null;
+        }
+
+        public void escolhaPromocao(string s)
+        {
+            pecaPromocao = tab.retirarPeca(posicaoPecaPromocao);
+            pecas.Remove(pecaPromocao);
+            Peca p;
+            int i = 0;
+            if (int.TryParse(s, out i))
+            {
+                switch (i)
+                {
+                    case 1:
+                        p = new Dama(tab, pecaPromocao.cor);
+                        break;
+                    case 2:
+                        p = new Bispo(tab, pecaPromocao.cor);
+                        break;
+                    case 3:
+                        p = new Torre(tab, pecaPromocao.cor);
+                        break;
+                    case 4:
+                        p = new Cavalo(tab, pecaPromocao.cor);
+                        break;
+                    default:
+                        p = new Dama(tab, pecaPromocao.cor);
+                        break;
+                }
+                tab.colocarPeca(p, posicaoPecaPromocao);
+                pecas.Add(p);
+                promocao = false;
+            }
+            else
+            {
+                p = new Dama(tab, pecaPromocao.cor);
+                tab.colocarPeca(p, posicaoPecaPromocao);
+                pecas.Add(p);
+                promocao = false;
+                throw new TabuleiroException("Valor digitado não é um número óu é inválido! Peça será uma Dama!");
+            }
         }
 
         public void validarPosicaoDeOrigem(Posicao pos)
